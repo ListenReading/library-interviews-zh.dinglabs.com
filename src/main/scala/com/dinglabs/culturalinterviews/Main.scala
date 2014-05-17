@@ -1,9 +1,10 @@
 package com.dinglabs.culturalinterviews
 
-import java.io.File
-import org.openqa.selenium.htmlunit.HtmlUnitDriver
-import scala.io.Source
 import com.dinglabs.culturalinterviews.ImplicitHelpers._
+import java.io.{ByteArrayInputStream, InputStream, FileInputStream, File}
+import org.ccil.cowan.tagsoup.jaxp.SAXFactoryImpl
+import scala.io.Source
+import scala.xml.{Node, Elem, XML}
 
 object Main {
 
@@ -19,6 +20,8 @@ object Main {
     }
   }
 
+  val loader = XML.withSAXParser(new SAXFactoryImpl().newSAXParser())
+
   case class Content(
                filename:     String,
                speakerName:  String,
@@ -28,30 +31,35 @@ object Main {
                chinese_simp: String,
                chinese_trad: String)
 
+  def s2is(s: String) : InputStream = new ByteArrayInputStream(s.getBytes)
+
   def extractContentFromHtml(file: File) : Content = {
     val text = Source.fromFile(file).mkString
 
-    //val filename : String = text match { case r"(?s).*\.\./movs/(.*?)$filename\..*" => filename }
-    val driver = new HtmlUnitDriver
-    driver.get(file.toURI.toString)
+    val xml = loader.load(new FileInputStream(file))
+
     Content(
       """(?s).*\.\./movs/(.*?)\..*""".r.findFirstMatchIn(text).get.group(1),
-      driver.findElementByXPath("//span[@class='shd']").getText.split(":")(0).trim,//driver.findElementByTagName("title").getText.split(":")(1).trim,
-      driver.findElementByXPath("//span[@class='sh2']").getText,
-      selectTranscriptContent(selectDiv(text, "e_txt")),
-      selectTranscriptContent(selectDiv(text, "rc_txt")),
-      selectTranscriptContent(selectDiv(text, "sc_txt")),
-      selectTranscriptContent(selectDiv(text, "tc_txt")))
+      (xml\\"span").filter(s => (s\"@class").text == "shd").head.text.split(":")(0).trim,
+      (xml\\"span").filter(s => (s\"@class").text == "sh2").head.text,
+      selectTranscriptContent(selectDiv(xml, "e_txt")),
+      selectTranscriptContent(selectDiv(xml, "rc_txt")),
+      selectTranscriptContent(selectDiv(xml, "sc_txt")),
+      selectTranscriptContent(selectDiv(xml, "tc_txt")))
   }
 
-  def selectDiv(text: String, id: String) : String = {
-    s"(?s).*<DIV id=.$id.>(.*?)</DIV>.*".r.findFirstMatchIn(text).get.group(1)
-  }
+  def selectDiv(xml: Elem, id: String) = (xml\\"div").filter(div => (div\"@id").text == id).head
 
-  def selectTranscriptContent(input: String): String = {
-    val s = """(?s).*\n\s*\n(.*)\n\s*\n.*""".r.findFirstMatchIn(input).map(_.group(1)).orElse(
-            """(?s).*((\s*[^<].*?\n)*).*""".r.findFirstMatchIn(input).map(_.group(1)))
-    s.get.trim.replaceAll("\\s+", " ")
+  def selectTranscriptContent(div: Node): String = {
+    val ps = div \\ "p"
+    val s = ps.filter(p => (p\"@class").text == "MsoPlainText").lastOption.getOrElse(
+            ps.filter(p => (p\"@class").text == "MsoPlainText").head
+    )
+    s.text.trim
+      .replaceAll("\\p{Z}+",    " ")  // multiple spaces
+      .replaceAll("^\\p{Z}+",   "")   // leading spaces on lines
+      .replaceAll("\\p{Z}+\\n", "\n") // trailing spaces on lines
+      .replaceAll("\\n+",       "\n") // multiple newlines
   }
 
 }
