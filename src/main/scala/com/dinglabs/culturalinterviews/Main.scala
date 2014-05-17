@@ -1,10 +1,12 @@
 package com.dinglabs.culturalinterviews
 
 import com.dinglabs.culturalinterviews.ImplicitHelpers._
-import java.io.{FileInputStream, File}
+import java.io.{FileWriter, FileInputStream, File}
 import org.ccil.cowan.tagsoup.jaxp.SAXFactoryImpl
+import resource._
 import scala.io.Source
 import scala.xml.{Node, Elem, XML}
+import au.com.bytecode.opencsv.CSVWriter
 
 object Main {
 
@@ -13,9 +15,11 @@ object Main {
 
     val htmlFiles = new File("input/html").listFiles
     println(s"File count: ${htmlFiles.length}")
-    for (file <- htmlFiles) {
+    for (writer <- managed(new CSVWriter(new FileWriter("output.csv")));
+         file <- htmlFiles) {
       val c = extractContentFromHtml(file)
       println(s"${c.filename} ${c.location} ${c.speakerName} ${c.pinyin.length} ${c.english.length} ${c.chinese_simp.length} ${c.chinese_trad.length}")
+      writer.writeNext(Array(c.filename, c.location, c.speakerName, c.english, c.chinese_simp, c.chinese_trad, c.pinyin))
     }
   }
 
