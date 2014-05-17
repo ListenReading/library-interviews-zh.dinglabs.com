@@ -1,6 +1,7 @@
 package com.dinglabs.culturalinterviews
 
 import scalax.file.Path
+import scala.xml.NodeSeq
 
 object ImplicitHelpers {
 
@@ -13,4 +14,13 @@ object ImplicitHelpers {
     def readToString = path.lines(includeTerminator = true).mkString("")
   }
 
+  implicit def richNodeSeq(ns: NodeSeq) = new {
+    /**
+     * Find nodes having an attribute with the given value
+     */
+    def \@(params: (String, String)) : NodeSeq = {
+      val (attribName, expectedValue) = params
+      ns filter { _ \ ("@" + attribName) exists (_.text == expectedValue) }
+    }
+  }
 }
