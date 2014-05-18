@@ -1,13 +1,14 @@
-package com.dinglabs.culturalinterviews
+package com.dinglabs.culturalinterviews.html
 
 import org.scalatest.FunSuite
 import java.io.File
+import com.dinglabs.culturalinterviews.html.Parser.extractContentFromHtml
 
-class MainTest extends FunSuite {
+class ParserTest extends FunSuite {
 
   test("extractContentFromHtml") {
     val file = new File("src/test/resources/example_content.html")
-    val c = Main.extractContentFromHtml(file)
+    val c = extractContentFromHtml(file)
     assert(c.filename     == "ste08lijie")
     assert(c.speakerName  == "Jie Li")
     assert(c.location     == "China, Shanghai")
@@ -19,7 +20,7 @@ class MainTest extends FunSuite {
 
   test("extractContentFromHtml prof10thomas.html") {
     val file = new File("src/test/resources/prof10thomas.html")
-    val c = Main.extractContentFromHtml(file)
+    val c = extractContentFromHtml(file)
     assert(c.filename     == "prof10thomas")
     assert(c.speakerName  == "Thomas Chiang")
     assert(c.location     == "China, Shan Dong")
