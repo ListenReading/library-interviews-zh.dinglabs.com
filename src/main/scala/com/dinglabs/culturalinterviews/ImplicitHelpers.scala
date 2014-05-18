@@ -2,6 +2,7 @@ package com.dinglabs.culturalinterviews
 
 import scalax.file.Path
 import scala.xml.NodeSeq
+import java.io.File
 
 object ImplicitHelpers {
 
@@ -12,6 +13,12 @@ object ImplicitHelpers {
 
   implicit class PathUtil(val path: Path) {
     def readToString = path.lines(includeTerminator = true).mkString("")
+  }
+
+  implicit def FilenameToFile(fn: String) = new File(fn)
+
+  implicit def FileUtil(f: File) = new {
+    def /(path: String) : File = new File(f, path)
   }
 
   implicit def XmlSelectors(ns: NodeSeq) = new {
