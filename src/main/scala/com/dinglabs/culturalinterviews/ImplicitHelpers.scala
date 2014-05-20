@@ -13,15 +13,19 @@ object ImplicitHelpers {
 
   implicit class PathUtil(val path: Path) {
     def readToString = path.lines(includeTerminator = true).mkString("")
+    def toFile = new File(path.toURI)
   }
 
-  implicit def FilenameToFile(fn: String) = new File(fn)
+  implicit def PathToFile(p: Path) = p.toFile
 
-  implicit def FileUtil(f: File) = new {
+  implicit def FilenameToFile(fn: String) = new File(fn)
+  implicit def FileToPath(f: File) = Path(f)
+
+  implicit class FileUtil(f: File) {
     def /(path: String) : File = new File(f, path)
   }
 
-  implicit def XmlSelectors(ns: NodeSeq) = new {
+  implicit class XmlSelectors(ns: NodeSeq) {
     /** Find nodes having an attribute with the given value  */
     def \@(params: (String, String)) : NodeSeq = {
       val (attribName, expectedValue) = params

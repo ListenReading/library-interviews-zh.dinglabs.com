@@ -7,8 +7,9 @@ version := "1.0"
 libraryDependencies ++= Seq(
   "org.ccil.cowan.tagsoup"        % "tagsoup"        % "1.2.1",
   "net.sf.opencsv"                % "opencsv"        % "2.3",
-  "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.2"
-  "com.jsuereth"                  %% "scala-arm"     % "1.3"
+  "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.2",
+  "com.jsuereth"                  %% "scala-arm"     % "1.3",
+  "com.scalatags"                 %% "scalatags"     % "0.2.5"
 )
 
 // Test dependencies
