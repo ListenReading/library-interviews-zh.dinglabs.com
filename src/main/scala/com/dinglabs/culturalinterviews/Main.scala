@@ -10,31 +10,34 @@ import com.dinglabs.culturalinterviews.html.Content
 import scalatags._
 import scalatags.all._
 import scalax.file.Path
+import scala.collection.JavaConversions._
 
 object Main {
 
   def main(args: Array[String]) {
     println("Hello world!")
 
-    val inputDir  = Path("input")
+    val inputDir = Path("input")
     val outputDir = Path("output")
-    outputDir.deleteRecursively(force=true)
-    outputDir.createDirectory(createParents=true)
-    val itemsDir = (outputDir/"item").createDirectory()
+    outputDir.deleteRecursively(force = true)
+    outputDir.createDirectory(createParents = true)
+    val itemsDir = (outputDir / "item").createDirectory()
 
     // copy over web-files directly
-    (inputDir/"web-files").children().foreach{c =>
-      val dest = outputDir/(c.relativize(c.parent.get))
+    (inputDir / "web-files").children().foreach { c =>
+      val dest = outputDir / (c.relativize(c.parent.get))
       println(s"copying $c to $dest")
       c.copyTo(dest)
     }
 
     // open CSV file
-    for (csvReader <- managed(new CSVReader(new FileReader(inputDir/"online_spreadsheet.csv"), DEFAULT_SEPARATOR, DEFAULT_QUOTE_CHARACTER, 1))) {
-      val Array(number, section, subtitle, youtubeId, code, location, speaker, english, chineseSimp, chineseTrad, pinyin) = csvReader.readNext()
-      val csvEntry = CsvEntry(number.toInt, section, subtitle, youtubeId, code, location, speaker, english, chineseSimp, chineseTrad, pinyin)
-      val html = htmlForItem(csvEntry)
-      writeToFile(html.toString, itemsDir/s"$number.html")
+    val csv = managed(new CSVReader(new FileReader(inputDir/"online_spreadsheet.csv"), DEFAULT_SEPARATOR, DEFAULT_QUOTE_CHARACTER, 1)).acquireAndGet(_.readAll())
+    val items = csv.map { e => CsvEntry(e(0).toInt, e(1), e(2), e(3), e(4), e(5), e(6), e(7), e(8), e(9), e(10)) }.toList
+
+    // render a page for each item
+    for (List(prev, Some(current), next) <- ((None :: items.map(Some(_))) :+ None).sliding(3)) {
+      val html = htmlForItem(prev, current, next)
+      writeToFile(html.toString, itemsDir/current.htmlFilename)
     }
   }
 
@@ -51,19 +54,25 @@ object Main {
                        chineseTrad: String,
                        pinyin:      String)
 
-  def htmlForItem(e: CsvEntry) = {
+  implicit class CsvEntryAddons(c: CsvEntry) {
+    def htmlFilename = s"${c.number}.html"
+    def title = s"${c.number}: ${c.speaker} - ${c.section} - ${c.subtitle}"
+  }
+
+  def htmlForItem(prev: Option[CsvEntry], e: CsvEntry, next: Option[CsvEntry]) = {
     scalatags.all.html(
       head(
-        "title".tag(s"${e.number}: ${e.speaker} - ${e.section} - ${e.subtitle}")
+        "title".tag(e.title)
       ),
       body(
-        h1(s"${e.number}: ${e.speaker} - ${e.section} - ${e.subtitle}",
-           a(href:="#", "next")),
+        h1(s"${e.number}: ${e.speaker} - ${e.section} - ${e.subtitle}"),
+        prev.map(p => a(href:=p.htmlFilename, title:=p.title, "< Previous")),
         iframe(width:="560",
                height:="315",
-               src:="http://www.youtube.com/embed/P6S_1nCfjWA?showinfo=0&amp;rel=0&amp;theme=light&amp;modestbranding=1",
+               src:=s"http://www.youtube.com/embed/${e.youtubeId}?showinfo=0&amp;rel=0&amp;theme=light&amp;modestbranding=1",
                "frameborder".attr:="0",
                "allowfullscreen".attr:="allowfullscreen"),
+        next.map(n => a(href:=n.htmlFilename, title:=n.title, "Next >")),
         div(e.english),
         div(e.chineseSimp),
         div(e.chineseTrad),
