@@ -9,7 +9,8 @@ libraryDependencies ++= Seq(
   "net.sf.opencsv"                % "opencsv"        % "2.3",
   "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.2",
   "com.jsuereth"                  %% "scala-arm"     % "1.3",
-  "com.scalatags"                 %% "scalatags"     % "0.2.5"
+  "com.scalatags"                 %% "scalatags"     % "0.2.5",
+  "org.scalaz"                    %% "scalaz-core"   % "7.0.6"
 )
 
 // Test dependencies

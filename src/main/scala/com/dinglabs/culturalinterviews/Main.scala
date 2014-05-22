@@ -11,8 +11,13 @@ import scalatags._
 import scalatags.all._
 import scalax.file.Path
 import scala.collection.JavaConversions._
+import com.dinglabs.culturalinterviews.csv.{CsvEntry, Parser}
+import scalaz._
+import Scalaz._
 
 object Main {
+
+  val ITEM_FOLDER = "item"
 
   def main(args: Array[String]) {
     println("Hello world!")
@@ -21,7 +26,7 @@ object Main {
     val outputDir = Path("output")
     outputDir.deleteRecursively(force = true)
     outputDir.createDirectory(createParents = true)
-    val itemsDir = (outputDir / "item").createDirectory()
+    val itemsDir = (outputDir / ITEM_FOLDER).createDirectory()
 
     // copy over web-files directly
     (inputDir / "web-files").children().foreach { c =>
@@ -31,28 +36,21 @@ object Main {
     }
 
     // open CSV file
-    val csv = managed(new CSVReader(new FileReader(inputDir/"online_spreadsheet.csv"), DEFAULT_SEPARATOR, DEFAULT_QUOTE_CHARACTER, 1)).acquireAndGet(_.readAll())
-    val items = csv.map { e => CsvEntry(e(0).toInt, e(1), e(2), e(3), e(4), e(5), e(6), e(7), e(8), e(9), e(10)) }.toList
+    val items = Parser.parseCsv(inputDir/"online_spreadsheet.csv")
 
     // render a page for each item
     for (List(prev, Some(current), next) <- ((None :: items.map(Some(_))) :+ None).sliding(3)) {
       val html = htmlForItem(prev, current, next)
       writeToFile(html.toString, itemsDir/current.htmlFilename)
     }
-  }
 
-  case class CsvEntry(
-                       number:      Int,
-                       section:     String,
-                       subtitle:    String,
-                       youtubeId:   String,
-                       code:        String,
-                       location:    String,
-                       speaker:     String,
-                       english:     String,
-                       chineseSimp: String,
-                       chineseTrad: String,
-                       pinyin:      String)
+    // one index for ALL videos, organized by sections and subtitle?
+    writeToFile(htmlForIndex(items).toString, outputDir/"index.html")
+
+    // TODO: generate indexes
+    // one index for each person?
+    // one index for each location?
+  }
 
   implicit class CsvEntryAddons(c: CsvEntry) {
     def htmlFilename = s"${c.number}.html"
@@ -62,13 +60,14 @@ object Main {
   def htmlForItem(prev: Option[CsvEntry], e: CsvEntry, next: Option[CsvEntry]) = {
     scalatags.all.html(
       head(
-        "title".tag(e.title)
+        "title".tag(e.title),
+        link(rel:="stylesheet", `type`:="text/css", href:="../css/item.css")
+
       ),
       body(
         h1(s"${e.number}: ${e.speaker} - ${e.section} - ${e.subtitle}"),
         prev.map(p => a(href:=p.htmlFilename, title:=p.title, "< Previous")),
-        iframe(width:="560",
-               height:="315",
+        iframe(`class`:="youtube-iframe",
                src:=s"http://www.youtube.com/embed/${e.youtubeId}?showinfo=0&amp;rel=0&amp;theme=light&amp;modestbranding=1",
                "frameborder".attr:="0",
                "allowfullscreen".attr:="allowfullscreen"),
@@ -81,14 +80,30 @@ object Main {
     )
   }
 
-  def writeContentToFilesystem(c: Content, dir: Path) {
-    writeToFile(c.chineseSimp, dir/"chinese_s.txt")
-    writeToFile(c.chineseTrad, dir/"chinese_t.txt")
-    writeToFile(c.english,     dir/"english.txt")
-    writeToFile(c.pinyin,      dir/"pinyin.txt")
-    writeToFile(c.location,    dir/"location.txt")
-    writeToFile(c.speaker,     dir/"speaker.txt")
-    writeToFile(c.filename,    dir/"filename.txt")
+  def htmlForIndex(items: Seq[CsvEntry]) = {
+    val pageTitle = "Cultural Interviews with Chinese-Speaking Professionals"
+    scalatags.all.html(
+      head(
+        "title".tag(pageTitle)
+      ),
+      body(
+        h1(pageTitle),
+        for ((section, sectionItems) <- items.groupBy(_.section).toList) yield {
+          ul(
+            li(section),
+            for ((subsection, subsectionItems) <- sectionItems.groupBy(_.subtitle).toList) yield {
+              val links = for (i <- subsectionItems.toList) yield {
+                a(href:=s"$ITEM_FOLDER/${i.htmlFilename}", i.speaker)
+              }
+              ul(
+                li(subsection),
+                links.intersperse(span(", "))
+              )
+            }
+          )
+        }
+      )
+    )
   }
 
   def writeToFile(s: String, f: File) {
