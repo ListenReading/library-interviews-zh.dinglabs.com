@@ -89,17 +89,16 @@ object Main {
       body(
         h1(pageTitle),
         for ((section, sectionItems) <- items.groupBy(_.section).toList) yield {
-          ul(
-            li(section),
-            for ((subsection, subsectionItems) <- sectionItems.groupBy(_.subtitle).toList) yield {
-              val links = for (i <- subsectionItems.toList) yield {
-                a(href:=s"$ITEM_FOLDER/${i.htmlFilename}", i.speaker)
+          div(
+            h2(section),
+            ul(
+              for ((subsection, subsectionItems) <- sectionItems.groupBy(_.subtitle).toList) yield {
+                val links = for (i <- subsectionItems.toList) yield {
+                  a(href:=s"$ITEM_FOLDER/${i.htmlFilename}", i.speaker)
+                }
+                li(span(subsection),": ", links.intersperse(span(", ")))
               }
-              ul(
-                li(subsection),
-                links.intersperse(span(", "))
-              )
-            }
+            )
           )
         }
       )
