@@ -65,17 +65,36 @@ object Main {
 
       ),
       body(
-        h1(s"${e.number}: ${e.speaker} - ${e.section} - ${e.subtitle}"),
-        prev.map(p => a(href:=p.htmlFilename, title:=p.title, "< Previous")),
+        div(`class`:="youtube-container-placeholder"),
+        div(`class`:="youtube-container",
+          div(`class`:="title", e.title),
+          prev.map(p => a(href:=p.htmlFilename, title:=p.title, `class`:="prevLink", "< Previous")),
+          next.map(n => a(href:=n.htmlFilename, title:=n.title, `class`:="nextLink", "Next >"))
+        ),
         iframe(`class`:="youtube-iframe",
-               src:=s"http://www.youtube.com/embed/${e.youtubeId}?showinfo=0&amp;rel=0&amp;theme=light&amp;modestbranding=1",
-               "frameborder".attr:="0",
-               "allowfullscreen".attr:="allowfullscreen"),
-        next.map(n => a(href:=n.htmlFilename, title:=n.title, "Next >")),
-        div(e.english),
-        div(e.chineseSimp),
-        div(e.chineseTrad),
-        div(e.pinyin)
+          src:=s"http://www.youtube.com/embed/${e.youtubeId}?showinfo=0&amp;rel=0&amp;theme=light&amp;modestbranding=1",
+          "frameborder".attr:="0",
+          "allowfullscreen".attr:="allowfullscreen"
+        ),
+        table(`class`:="transcript",
+          tr(
+            td(`class`:="english", e.english),
+            td(e.chineseSimp)
+          )
+        ),
+        table(
+          tr(
+            td(e.chineseTrad),
+            td(e.pinyin)
+          )
+        ),
+        script(src:="../vendor/tether/tether.0.6.5.min.js"),
+        script(raw(
+          """
+          new Tether({ element:".youtube-container", target:".youtube-container-placeholder", attachment:"top left", targetAttachment:"top left", constraints: [{to:'window', pin:true}]});
+          new Tether({ element:".youtube-iframe", target:".transcript", attachment:"top left", targetAttachment:"top right", constraints: [{to:'window', pin:true}]});
+          Tether.position();
+          """))
       )
     )
   }

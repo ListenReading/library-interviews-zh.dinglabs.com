@@ -10,6 +10,8 @@ Adapting content from [Cultural Interviews with Chinese-Speaking Professionals](
 4. Use that CSV as input to generate HTML files.
 
 ## Future Enhancements
+- [ ] Add 404 page
+- [ ] Add link to source on every page: "This is reformatted content from "this website", for educational purposes. Fork the source code on GitHub."  
 
 - [ ] Generate new displays for the content
   - build-in popup dictionary
