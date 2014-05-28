@@ -55,6 +55,7 @@ object Main {
   implicit class CsvEntryAddons(c: CsvEntry) {
     def htmlFilename = s"${c.number}.html"
     def title = s"${c.number}: ${c.speaker} - ${c.section} - ${c.subtitle}"
+    def origUrl = s"http://www.laits.utexas.edu/orkelm/chinese/vid/${c.code}.html"
   }
 
   def htmlForItem(prev: Option[CsvEntry], e: CsvEntry, next: Option[CsvEntry]) = {
@@ -67,14 +68,20 @@ object Main {
       body(
         div(`class`:="youtube-container-placeholder"),
         div(`class`:="youtube-container",
-          div(`class`:="title", e.title),
-          prev.map(p => a(href:=p.htmlFilename, title:=p.title, `class`:="prevLink", "< Previous")),
-          next.map(n => a(href:=n.htmlFilename, title:=n.title, `class`:="nextLink", "Next >"))
-        ),
-        iframe(`class`:="youtube-iframe",
-          src:=s"http://www.youtube.com/embed/${e.youtubeId}?showinfo=0&amp;rel=0&amp;theme=light&amp;modestbranding=1",
-          "frameborder".attr:="0",
-          "allowfullscreen".attr:="allowfullscreen"
+          iframe(`class`:="youtube-iframe",
+            src:=s"http://www.youtube.com/embed/${e.youtubeId}?showinfo=0&rel=0&theme=light&modestbranding=1&autoplay=1",
+            "frameborder".attr:="0",
+            "allowfullscreen".attr:="allowfullscreen"
+          ),
+          div(`class`:="titleSection",
+            div(`class`:="title", e.title),
+            div(`class`:="location", e.location),
+            div(`class`:="navLinks",
+              prev.map(p => a(href:=p.htmlFilename, title:=p.title, `class`:="navLink", "< Previous")),
+              a(`class`:="navLink", href:="../index.html", "Index"),
+              next.map(n => a(href:=n.htmlFilename, title:=n.title, `class`:="navLink", "Next >"))
+            )
+          )
         ),
         table(`class`:="transcript",
           tr(
@@ -88,16 +95,20 @@ object Main {
             td(e.pinyin)
           )
         ),
+        hr(),
+        div("Content original source: ", a(href:=e.origUrl, s"${e.code}.html")),
+        div(footerLinkToOriginal),
         script(src:="../vendor/tether/tether.0.6.5.min.js"),
         script(raw(
           """
           new Tether({ element:".youtube-container", target:".youtube-container-placeholder", attachment:"top left", targetAttachment:"top left", constraints: [{to:'window', pin:true}]});
-          new Tether({ element:".youtube-iframe", target:".transcript", attachment:"top left", targetAttachment:"top right", constraints: [{to:'window', pin:true}]});
-          Tether.position();
+          setTimeout(function(){ Tether.position(); } , 0);
           """))
       )
     )
   }
+
+  def footerLinkToOriginal = div("View original ", a(href:="http://www.laits.utexas.edu/orkelm/chinese/", "Cultural Interviews with Chinese-Speaking Professionals")," from University of Texas at Austin.")
 
   def htmlForIndex(items: Seq[CsvEntry]) = {
     val pageTitle = "Cultural Interviews with Chinese-Speaking Professionals"
@@ -119,7 +130,8 @@ object Main {
               }
             )
           )
-        }
+        },
+        footerLinkToOriginal
       )
     )
   }
