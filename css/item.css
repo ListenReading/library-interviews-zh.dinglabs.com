@@ -1,0 +1,56 @@
+body {
+  margin: 0px;
+}
+
+.youtube-container-placeholder {
+  height: 130px
+}
+.youtube-container {
+  width: 100%;
+  background-color: #E6E3E3;
+  font-family: arial;
+}
+
+.titleSection {
+  padding-left: 1em;
+}
+.title {
+  font-size:   24px;
+  font-weight: bold;
+  padding-top: 1em;
+}
+.location {
+  color: gray;
+}
+.navLinks {
+  padding-top: 0.75em;
+}
+.navLink {
+  padding: 0em 0.5em;
+}
+
+.youtube-iframe {
+  width:  160;
+  height: 120;
+  float: right;
+}
+
+.transcript {
+  max-width:     53em;
+  padding-right: 5em;
+  white-space: pre-wrap;
+  font-size:   18px;
+}
+.transcript tr {
+  vertical-align: top;
+}
+.transcript td {
+  padding:      1em;
+  padding-left: 2em;
+  line-height:  1.5;
+  font-family: arial;
+}
+.english {
+  width: 54%;
+  font-size: 90%;
+}
